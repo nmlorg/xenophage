@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+<script>
+const SYMBOLS = ['A', 'V', 't', 'X'];
+
+class PuzzleSymbol extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({mode: 'open'});
+    let select = document.createElement('select');
+    for (let sym of SYMBOLS) {
+      let option = document.createElement('option');
+      option.textContent = option.value = sym;
+      select.append(option);
+    }
+    this.shadowRoot.append(select);
+  }
+
+  get value() {
+    return this.shadowRoot.children[0].value;
+  }
+}
+
+customElements.define('puzzle-symbol', PuzzleSymbol);
+
+class PuzzleSolveButton extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({mode: 'open'});
+    let button = document.createElement('button');
+    button.textContent = 'Solve';
+    this.shadowRoot.append(button);
+    button.addEventListener('click', e => this.solve());
+  }
+
+  solve() {
+    let parent = this;
+    let symbols = [];
+    while (parent.parentNode && (symbols.length != 10)) {
+      parent = parent.parentNode;
+      symbols = parent.getElementsByTagName('puzzle-symbol');
+    }
+    if (symbols.length != 10)
+      return;
+    let grid = new Grid(SYMBOLS.length, [
+        symbols[1].value, symbols[2].value, symbols[3].value,
+        symbols[4].value, symbols[5].value, symbols[6].value,
+        symbols[7].value, symbols[8].value, symbols[9].value,
+    ].map(symbol => SYMBOLS.indexOf(symbol)));
+    let path = grid.solve(SYMBOLS.indexOf(symbols[0].value));
+    document.body.append(JSON.stringify(path), document.createElement('br'));
+  }
+}
+
+customElements.define('puzzle-solve-button', PuzzleSolveButton);
+
+class Grid {
+  constructor(numsymbols, data) {
+    this.numsymbols_ = numsymbols;
+    this.data_ = data;
+    this.sidelength_ = Math.sqrt(data.length);
+  }
+
+  copy() {
+    return new Grid(this.numsymbols_, [...this.data_]);
+  }
+
+  solved(target) {
+    for (let col = 0; col < this.sidelength_; col++)
+      for (let row = 0; row < this.sidelength_; row++)
+        if (this.get(col, row) != target)
+          return false;
+    return true;
+  }
+
+  solve(target) {
+    if (this.solved(target))
+      return [];
+    let paths = [[[], this]];
+    while (paths.length) {
+      let [path, candidate] = paths.shift();
+      for (let col = 0; col < this.sidelength_; col++) {
+        for (let row = 0; row < this.sidelength_; row++) {
+          let newpath = path.concat([[col, row]]);
+          let newgrid = candidate.copy();
+          newgrid.flipAll(col, row);
+          if (newgrid.solved(target))
+            return newpath;
+          paths.push([newpath, newgrid]);
+        }
+      }
+    }
+  }
+
+  get(col, row) {
+    let slot = row * this.sidelength_ + col;
+    return this.data_[slot];
+  }
+
+  flip(col, row) {
+    let slot = row * this.sidelength_ + col;
+    this.data_[slot] = (this.data_[slot] + 1) % this.numsymbols_;
+  }
+
+  flipAll(col, row) {
+    for (let i = 0; i < this.sidelength_; i++) {
+      if (i != col)
+        this.flip(i, row);
+      if (i != row)
+        this.flip(col, i);
+    }
+    this.flip(col, row);
+  }
+}
+</script>
+
+<table border="1" cellpadding="10" cellspacing="0">
+<tr>
+<td></td>
+<td><puzzle-symbol/></td>
+<td></td>
+</tr>
+<tr>
+<td><puzzle-symbol/></td>
+<td><puzzle-symbol/></td>
+<td><puzzle-symbol/></td>
+</tr>
+<tr>
+<td><puzzle-symbol/></td>
+<td><puzzle-symbol/></td>
+<td><puzzle-symbol/></td>
+</tr>
+<tr>
+<td><puzzle-symbol/></td>
+<td><puzzle-symbol/></td>
+<td><puzzle-symbol/></td>
+</tr>
+<tr>
+<td colspan="3" align="center"><puzzle-solve-button/></td>
+</tr>
+</table>
