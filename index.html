@@ -77,13 +77,18 @@ class Grid {
     if (this.solved(target))
       return [];
     let paths = [[[], this]];
+    let seen = new Set();
     while (paths.length) {
       let [path, candidate] = paths.shift();
       for (let col = 0; col < this.sidelength_; col++) {
         for (let row = 0; row < this.sidelength_; row++) {
-          let newpath = path.concat([[col, row]]);
           let newgrid = candidate.copy();
           newgrid.flipAll(col, row);
+          let gridcode = newgrid.gridCode();
+          if (seen.has(gridcode))
+            continue;
+          seen.add(gridcode);
+          let newpath = path.concat([[col, row]]);
           if (newgrid.solved(target))
             return newpath;
           paths.push([newpath, newgrid]);
@@ -110,6 +115,15 @@ class Grid {
         this.flip(col, i);
     }
     this.flip(col, row);
+  }
+
+  gridCode() {
+    let code = 0;
+    for (let cell of this.data_) {
+      code *= this.numsymbols_;
+      code += cell;
+    }
+    return code;
   }
 }
 </script>
