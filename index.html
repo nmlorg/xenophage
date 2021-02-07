@@ -48,7 +48,35 @@ class PuzzleSolveButton extends HTMLElement {
         symbols[7].value, symbols[8].value, symbols[9].value,
     ].map(symbol => SYMBOLS.indexOf(symbol)));
     let path = grid.solve(SYMBOLS.indexOf(symbols[0].value));
-    document.body.append(JSON.stringify(path), document.createElement('br'));
+    let solutionDiv = document.getElementById('solution');
+    solutionDiv.textContent = '';
+    for (let [col, row] of path) {
+      grid.flipAll(col, row);
+      let pre = document.createElement('pre');
+      for (let y = 0; y < grid.sidelength_; y++) {
+        for (let x = 0; x < grid.sidelength_; x++)
+          pre.textContent += '    ' + SYMBOLS[grid.get(x, y)];
+        pre.textContent += '\n';
+      }
+      let where = '';
+      if (row == 0)
+        where = 'top ';
+      else if (row == grid.sidelength_ - 1)
+        where = 'bottom ';
+      else if (grid.sidelength_ == 3)
+        where = 'middle ';
+      else
+        where = row + ' down ';
+      if (col == 0)
+        where += 'left';
+      else if (col == grid.sidelength_ - 1)
+        where += 'right';
+      else if (grid.sidelength_ == 3)
+        where += 'middle';
+      else
+        where += col + ' right';
+      solutionDiv.append(where, pre);
+    }
   }
 }
 
@@ -187,3 +215,5 @@ class Grid {
 <td colspan="3" align="center"><puzzle-solve-button/></td>
 </tr>
 </table>
+
+<div id="solution"></div>
