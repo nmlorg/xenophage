@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <script>
-const SYMBOLS = ['A', 'V', 't', 'X'];
+const SYMBOLS = ['A', 'X', 't', 'V'];
 
 class PuzzleSymbol extends HTMLElement {
   constructor() {
@@ -18,6 +18,10 @@ class PuzzleSymbol extends HTMLElement {
 
   get value() {
     return this.shadowRoot.children[0].value;
+  }
+
+  set value(value) {
+    this.shadowRoot.children[0].value = value;
   }
 }
 
@@ -49,6 +53,10 @@ class PuzzleSolveButton extends HTMLElement {
     ].map(symbol => SYMBOLS.indexOf(symbol)));
     let path = grid.solve(SYMBOLS.indexOf(symbols[0].value));
     let solutionDiv = document.getElementById('solution');
+    if (!path) {
+      solutionDiv.textContent = 'No solution.';
+      return;
+    }
     solutionDiv.textContent = '';
     for (let [col, row] of path) {
       grid.flipAll(col, row);
@@ -215,5 +223,25 @@ class Grid {
 <td colspan="3" align="center"><puzzle-solve-button/></td>
 </tr>
 </table>
+
+<script>
+for (let [name, target, textsyms] of [
+    ["K1 Logistics (Archer's Line)", 'A', 'tttAttttt'],
+    ["K1 Revelation (Sorrow's Harbor)", 'X', 'tAVVXVtAV'],
+    ['K1 Crew Quarters (Hellmouth)', 't', 'AXVAXXAAA'],
+    ['K1 Communion (Anchor of Light)', 'V', 'AXAtXtXVX'],
+]) {
+  let button = document.createElement('button');
+  button.textContent = name;
+  button.addEventListener('click', e => {
+    let symbols = document.getElementsByTagName('puzzle-symbol');
+    symbols[0].value = target;
+    for (i = 0; i < textsyms.length; i++)
+      symbols[i + 1].value = textsyms[i];
+    document.getElementsByTagName('puzzle-solve-button')[0].solve();
+  });
+  document.body.append(button, document.createElement('br'));
+}
+</script>
 
 <div id="solution"></div>
