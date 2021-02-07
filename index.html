@@ -84,7 +84,8 @@ class Grid {
         for (let row = 0; row < this.sidelength_; row++) {
           let newgrid = candidate.copy();
           newgrid.flipAll(col, row);
-          let gridcode = newgrid.gridCode();
+          // See https://github.com/nmlorg/xenophage/issues/1.
+          let gridcode = Math.min(...newgrid.equivGrids().map(grid => grid.gridCode()));
           if (seen.has(gridcode))
             continue;
           seen.add(gridcode);
@@ -124,6 +125,39 @@ class Grid {
       code += cell;
     }
     return code;
+  }
+
+  flipVert() {
+    // 0,0  1,0  2,0    2,0  1,0  0,0
+    // 0,1  1,1  2,1 -> 2,1  1,1  0,1
+    // 0,2  1,2  2,2    2,2  1,2  0,2
+    let data = [];
+    for (let row = 0; row < this.sidelength_; row++)
+      for (let col = 0; col < this.sidelength_; col++)
+        data.push(this.get(this.sidelength_ - col - 1, row));
+    return new Grid(this.numsymbols_, data);
+  }
+
+  rotateLeft() {
+    // 0,0  1,0  2,0    2,0  2,1  2,2
+    // 0,1  1,1  2,1 -> 1,0  1,1  1,2
+    // 0,2  1,2  2,2    0,0  0,1  0,2
+    let data = [];
+    for (let row = 0; row < this.sidelength_; row++)
+      for (let col = 0; col < this.sidelength_; col++)
+        data.push(this.get(this.sidelength_ - row - 1, col));
+    return new Grid(this.numsymbols_, data);
+  }
+
+  equivGrids() {
+    let grid = this;
+    let ret = [];
+    for (let i = 0; i < 4; i++) {
+      ret.push(grid);
+      ret.push(grid.flipVert());
+      grid = grid.rotateLeft();
+    }
+    return ret;
   }
 }
 </script>
