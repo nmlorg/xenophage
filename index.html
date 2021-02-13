@@ -2,26 +2,28 @@
 
 <script>
 const SYMBOLS = ['A', 'X', 't', 'V'];
+const ICONS = ['15', '08', '01', '18'];
 
 class PuzzleSymbol extends HTMLElement {
-  constructor() {
+  constructor(value=SYMBOLS[0], size=75) {
     super();
     this.attachShadow({mode: 'open'});
-    let select = document.createElement('select');
-    for (let sym of SYMBOLS) {
-      let option = document.createElement('option');
-      option.textContent = option.value = sym;
-      select.append(option);
-    }
-    this.shadowRoot.append(select);
+    this.img = document.createElement('img');
+    this.img.width = size;
+    this.shadowRoot.append(this.img);
+    this.value = value;
+    this.addEventListener('click', e => {
+      this.value = SYMBOLS[(SYMBOLS.indexOf(this.value) + 1) % SYMBOLS.length];
+    });
   }
 
   get value() {
-    return this.shadowRoot.children[0].value;
+    return this.value_;
   }
 
   set value(value) {
-    this.shadowRoot.children[0].value = value;
+    this.value_ = value;
+    this.img.src = `https://errata.ishtar-collective.net/assets/2019/05/all-hive-runes/all-hive-runes_sigil_${ICONS[SYMBOLS.indexOf(value)]}.png`;
   }
 }
 
@@ -60,12 +62,6 @@ class PuzzleSolveButton extends HTMLElement {
     solutionDiv.textContent = '';
     for (let [col, row] of path) {
       grid.flipAll(col, row);
-      let pre = document.createElement('pre');
-      for (let y = 0; y < grid.sidelength_; y++) {
-        for (let x = 0; x < grid.sidelength_; x++)
-          pre.textContent += '    ' + SYMBOLS[grid.get(x, y)];
-        pre.textContent += '\n';
-      }
       let where = '';
       if (row == 0)
         where = 'top ';
@@ -83,7 +79,12 @@ class PuzzleSolveButton extends HTMLElement {
         where += 'middle';
       else
         where += col + ' right';
-      solutionDiv.append(where, pre);
+      solutionDiv.append(where, document.createElement('br'));
+      for (let y = 0; y < grid.sidelength_; y++) {
+        for (let x = 0; x < grid.sidelength_; x++)
+          solutionDiv.append(new PuzzleSymbol(SYMBOLS[grid.get(x, y)], 50));
+        solutionDiv.append(document.createElement('br'));
+      }
     }
   }
 }
